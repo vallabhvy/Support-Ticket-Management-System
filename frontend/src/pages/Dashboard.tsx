@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import api from "../api";
 import {
   Plus,
   MessageSquare,
-  Clock,
-  AlertCircle,
-  CheckCircle2,
 } from "lucide-react";
 
 interface Ticket {
@@ -20,7 +17,7 @@ interface Ticket {
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
 
