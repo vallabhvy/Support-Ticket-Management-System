@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  AGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(CUSTOMER)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Tickets created by this customer
+  tickets Ticket[] @relation("CustomerTickets")
+
+  // Tickets assigned to this agent
+  assignedTickets Ticket[] @relation("AssignedTickets")
+
+  // Comments written by this user
+  comments TicketComment[]
+
+  @@map("users")
+}
+
+model Ticket {
+  id          Int          @id @default(autoincrement())
+  subject     String
+  description String       @db.Text
+  status      TicketStatus @default(OPEN)
+  priority    Priority     @default(MEDIUM)
+
+  // Customer who created the ticket
+  customerId Int  @map("user_id")
+  customer   User @relation("CustomerTickets", fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Agent assigned to the ticket
+  assignedToId Int? @map("assigned_to")
+  assignedTo   User? @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  comments TicketComment[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([customerId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+  @@map("tickets")
+}
+
+model TicketComment {
+  id      Int    @id @default(autoincrement())
+  content String @db.Text
+
+  ticketId Int    @map("ticket_id")
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  userId Int  @map("user_id")
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([ticketId])
+  @@index([userId])
+  @@map("ticket_comments")
+}
